@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 Daily Tracker</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: #0d1117; color: #c9d1d9; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .progress-container { width: 90%; max-width: 600px; background: #30363d; border-radius: 10px; height: 25px; margin: 20px 0; overflow: hidden; border: 1px solid #444; }
+        .progress-bar { height: 100%; background: #238636; width: 0%; transition: width 0.8s ease-in-out; text-align: center; font-size: 14px; line-height: 25px; color: white; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, 15px); width: 90%; max-width: 800px; gap: 4px; margin-top: 20px; justify-content: center; }
+        .day { width: 15px; height: 15px; background: #161b22; border-radius: 2px; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
+        .day.completed { background: #39d353; box-shadow: 0 0 5px #39d353; }
+        .day.today { border: 2px solid #58a6ff; }
+        h1 { margin-bottom: 5px; color: #f0f6fc; }
+        p { color: #8b949e; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <h1>2026 Progress</h1>
+    <p id="day-counter">Loading...</p>
+    
+    <div class="progress-container">
+        <div id="bar" class="progress-bar">0%</div>
+    </div>
+
+    <div class="grid" id="year-grid"></div>
+
+    <script>
+        const year = 2026;
+        const grid = document.getElementById('year-grid');
+        const now = new Date();
+        
+        // Calculate days in 2026
+        const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+        const totalDays = isLeap ? 366 : 365;
+
+        // Current Day of Year
+        const start = new Date(year, 0, 0);
+        const diff = now - start;
+        const oneDay = 1000 * 60 * 60 * 24;
+        let dayOfYear = Math.floor(diff / oneDay);
+        if (now.getFullYear() < year) dayOfYear = 0; // Not 2026 yet
+        if (now.getFullYear() > year) dayOfYear = totalDays; // Past 2026
+
+        // Update Progress Bar
+        const percent = ((dayOfYear / totalDays) * 100).toFixed(1);
+        document.getElementById('bar').style.width = percent + "%";
+        document.getElementById('bar').innerText = percent + "%";
+        document.getElementById('day-counter').innerText = `Day ${dayOfYear} of ${totalDays}`;
+
+        // Load saved data
+        let savedData = JSON.parse(localStorage.getItem('tracker2026')) || [];
+
+        // Build Grid
+        for (let i = 1; i <= totalDays; i++) {
+            const daySquare = document.createElement('div');
+            daySquare.classList.add('day');
+            if (i === dayOfYear) daySquare.classList.add('today');
+            if (savedData.includes(i)) daySquare.classList.add('completed');
+
+            daySquare.onclick = () => {
+                daySquare.classList.toggle('completed');
+                if (savedData.includes(i)) {
+                    savedData = savedData.filter(d => d !== i);
+                } else {
+                    savedData.push(i);
+                }
+                localStorage.setItem('tracker2026', JSON.stringify(savedData));
+            };
+            grid.appendChild(daySquare);
+        }
+    </script>
+</body>
+</html>
