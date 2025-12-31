@@ -5,69 +5,125 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2026 Daily Tracker</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: #0d1117; color: #c9d1d9; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .progress-container { width: 90%; max-width: 600px; background: #30363d; border-radius: 10px; height: 25px; margin: 20px 0; overflow: hidden; border: 1px solid #444; }
-        .progress-bar { height: 100%; background: #238636; width: 0%; transition: width 0.8s ease-in-out; text-align: center; font-size: 14px; line-height: 25px; color: white; font-weight: bold; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, 15px); width: 90%; max-width: 800px; gap: 4px; margin-top: 20px; justify-content: center; }
-        .day { width: 15px; height: 15px; background: #161b22; border-radius: 2px; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
-        .day.completed { background: #39d353; box-shadow: 0 0 5px #39d353; }
-        .day.today { border: 2px solid #58a6ff; }
-        h1 { margin-bottom: 5px; color: #f0f6fc; }
-        p { color: #8b949e; margin-bottom: 20px; }
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --green: #39d353;
+            --blue: #58a6ff;
+        }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
+        
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; width: 90%; max-width: 600px; margin-bottom: 20px; }
+
+        /* Progress Bar */
+        .progress-container { background: var(--border); border-radius: 10px; height: 20px; margin: 15px 0; overflow: hidden; }
+        .progress-bar { height: 100%; background: var(--green); width: 0%; transition: width 0.5s; text-align: center; font-size: 12px; line-height: 20px; color: black; font-weight: bold; }
+
+        /* GitHub Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14px, 1fr)); gap: 4px; margin-top: 10px; }
+        .day { aspect-ratio: 1/1; background: #21262d; border-radius: 2px; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
+        .day.completed { background: var(--green); box-shadow: 0 0 5px var(--green); }
+        .day.today { border: 2px solid var(--blue); }
+
+        /* Tasks Section */
+        .task-list { list-style: none; padding: 0; }
+        .task-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .task-item:last-child { border-bottom: none; }
+        input[type="checkbox"] { width: 20px; height: 20px; margin-right: 15px; cursor: pointer; accent-color: var(--green); }
+        
+        .btn-reset { background: var(--border); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px; font-size: 12px; }
+        .btn-reset:hover { background: #444; }
+
+        h2 { margin-top: 0; font-size: 1.2rem; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
 
-    <h1>2026 Progress</h1>
-    <p id="day-counter">Loading...</p>
-    
-    <div class="progress-container">
-        <div id="bar" class="progress-bar">0%</div>
+    <div class="card">
+        <h2>2026 Year Progress <span id="percent-text">0%</span></h2>
+        <p id="day-counter" style="font-size: 14px; color: #8b949e;">Day 0 / 365</p>
+        <div class="progress-container">
+            <div id="bar" class="progress-bar"></div>
+        </div>
     </div>
 
-    <div class="grid" id="year-grid"></div>
+    <div class="card">
+        <h2>Daily Tasks (5)</h2>
+        <ul class="task-list">
+            <li class="task-item"><input type="checkbox" class="task-check"> Task 1: Morning Exercise</li>
+            <li class="task-item"><input type="checkbox" class="task-check"> Task 2: Read for 20 mins</li>
+            <li class="task-item"><input type="checkbox" class="task-check"> Task 3: Drink 2L Water</li>
+            <li class="task-item"><input type="checkbox" class="task-check"> Task 4: Deep Work Session</li>
+            <li class="task-item"><input type="checkbox" class="task-check"> Task 5: Journaling</li>
+        </ul>
+        <button class="btn-reset" onclick="resetTasks()">Clear Today's Tasks</button>
+    </div>
+
+    <div class="card">
+        <h2>Activity Tracker</h2>
+        <div class="grid" id="year-grid"></div>
+        <p style="font-size: 11px; margin-top: 15px; color: #8b949e;">Tip: Click a square to mark a day as "Full Success".</p>
+    </div>
 
     <script>
         const year = 2026;
         const grid = document.getElementById('year-grid');
         const now = new Date();
         
-        // Calculate days in 2026
+        // Year Logic
         const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
         const totalDays = isLeap ? 366 : 365;
-
-        // Current Day of Year
         const start = new Date(year, 0, 0);
         const diff = now - start;
         const oneDay = 1000 * 60 * 60 * 24;
         let dayOfYear = Math.floor(diff / oneDay);
-        if (now.getFullYear() < year) dayOfYear = 0; // Not 2026 yet
-        if (now.getFullYear() > year) dayOfYear = totalDays; // Past 2026
+        
+        // Boundaries for current year
+        if (now.getFullYear() < year) dayOfYear = 0;
+        if (now.getFullYear() > year) dayOfYear = totalDays;
 
-        // Update Progress Bar
+        // Update Progress UI
         const percent = ((dayOfYear / totalDays) * 100).toFixed(1);
         document.getElementById('bar').style.width = percent + "%";
-        document.getElementById('bar').innerText = percent + "%";
-        document.getElementById('day-counter').innerText = `Day ${dayOfYear} of ${totalDays}`;
+        document.getElementById('percent-text').innerText = percent + "%";
+        document.getElementById('day-counter').innerText = `Day ${dayOfYear} / ${totalDays}`;
 
-        // Load saved data
-        let savedData = JSON.parse(localStorage.getItem('tracker2026')) || [];
+        // Local Storage for Grid and Tasks
+        let savedDays = JSON.parse(localStorage.getItem('tracker2026_grid')) || [];
+        let savedTasks = JSON.parse(localStorage.getItem('tracker2026_tasks')) || [false, false, false, false, false];
+
+        // Setup Task Checkboxes
+        const checkboxes = document.querySelectorAll('.task-check');
+        checkboxes.forEach((cb, index) => {
+            cb.checked = savedTasks[index];
+            cb.onchange = () => {
+                savedTasks[index] = cb.checked;
+                localStorage.setItem('tracker2026_tasks', JSON.stringify(savedTasks));
+            };
+        });
+
+        function resetTasks() {
+            checkboxes.forEach((cb, i) => { cb.checked = false; savedTasks[i] = false; });
+            localStorage.setItem('tracker2026_tasks', JSON.stringify(savedTasks));
+        }
 
         // Build Grid
         for (let i = 1; i <= totalDays; i++) {
             const daySquare = document.createElement('div');
             daySquare.classList.add('day');
             if (i === dayOfYear) daySquare.classList.add('today');
-            if (savedData.includes(i)) daySquare.classList.add('completed');
+            if (savedDays.includes(i)) daySquare.classList.add('completed');
 
             daySquare.onclick = () => {
                 daySquare.classList.toggle('completed');
-                if (savedData.includes(i)) {
-                    savedData = savedData.filter(d => d !== i);
+                if (savedDays.includes(i)) {
+                    savedDays = savedDays.filter(d => d !== i);
                 } else {
-                    savedData.push(i);
+                    savedDays.push(i);
                 }
-                localStorage.setItem('tracker2026', JSON.stringify(savedData));
+                localStorage.setItem('tracker2026_grid', JSON.stringify(savedDays));
             };
             grid.appendChild(daySquare);
         }
